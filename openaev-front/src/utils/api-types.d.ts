@@ -3269,7 +3269,7 @@ export interface InjectorContractAddInput {
   contract_attack_patterns_ids?: string[];
   contract_content: string;
   /** @uniqueItems true */
-  contract_domains?: Domain[];
+  contract_domains: Domain[];
   contract_id: string;
   contract_labels?: Record<string, string>;
   contract_manual?: boolean;
@@ -3409,6 +3409,8 @@ export interface InjectorContractUpdateInput {
 
 export interface InjectorContractUpdateMappingInput {
   contract_attack_patterns_ids?: string[];
+  /** Set list of domains */
+  contract_domains: string[];
   contract_vulnerability_ids?: string[];
 }
 
