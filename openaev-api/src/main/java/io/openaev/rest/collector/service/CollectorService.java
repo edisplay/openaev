@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -196,6 +197,8 @@ public class CollectorService extends AbstractConnectorService<Collector, Collec
     return collectorRepository.findByPayloadId(payloadId);
   }
 
+  @Query(
+      "SELECT c FROM Collector c WHERE c.detectionRemediations.payload.injector.contracts.injects.injectId = :injectId")
   public List<Collector> collectorsForAtomicTesting(String injectId) {
     return collectorRepository.findByInjectId(injectId);
   }

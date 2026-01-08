@@ -3,6 +3,7 @@ package io.openaev.rest.injector_contract;
 import static io.openaev.utils.ArchitectureFilterUtils.handleArchitectureFilter;
 import static io.openaev.utils.pagination.PaginationUtils.buildPaginationCriteriaBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.openaev.aop.RBAC;
 import io.openaev.database.model.Action;
 import io.openaev.database.model.InjectorContract;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 public class InjectorContractApi extends RestBehavior {
+
+  private final ObjectMapper mapper;
 
   public static final String INJECTOR_CONTRACT_URL = "/api/injector_contracts";
 

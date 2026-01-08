@@ -53,11 +53,7 @@ public class SecurityCoverage implements Base {
 
   @Column(name = "security_coverage_scheduling", nullable = false)
   @JsonProperty("security_coverage_scheduling")
-  private String scheduling;
-
-  @Transient
-  @JsonProperty("security_coverage_duration")
-  private String duration;
+  private String scheduling; // duration
 
   @Column(name = "security_coverage_period_start")
   @JsonProperty("security_coverage_period_start")

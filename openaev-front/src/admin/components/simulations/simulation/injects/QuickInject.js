@@ -1262,7 +1262,6 @@ class QuickInject extends Component {
                             predefinedExpectationDatas={predefinedExpectations}
                             expectationDatas={expectations}
                             handleExpectations={this.handleExpectations.bind(this)}
-                            isHumanInject={true}
                           />
                         )}
                     </>

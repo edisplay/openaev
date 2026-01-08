@@ -12,7 +12,7 @@ const TextSearchComponent: FunctionComponent<Props> = ({
   textSearch,
   textSearchHelpers,
 }) => {
-  const handleTextSearch = (value?: string) => textSearchHelpers.handleTextSearch(value?.trim());
+  const handleTextSearch = (value?: string) => textSearchHelpers.handleTextSearch(value);
 
   return (
     <SearchFilter

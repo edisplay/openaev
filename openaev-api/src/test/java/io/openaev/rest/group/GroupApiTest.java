@@ -43,16 +43,16 @@ public class GroupApiTest extends IntegrationTest {
   @Autowired private GroupComposer groupComposer;
 
   @BeforeEach
-  void setup() {
+  public void setup() {
     groupComposer.reset();
   }
 
   @Nested
   @DisplayName("Normal CRUD")
-  class NormalCRUD {
+  public class NormalCRUD {
     @Test
     @DisplayName("Can create a group with input")
-    void canCreateAGroupWithInput() throws Exception {
+    public void canCreateAGroupWithInput() throws Exception {
       GroupCreateInput input = new GroupCreateInput();
       input.setName("Created group name");
       input.setDescription("Created group description");
@@ -86,7 +86,7 @@ public class GroupApiTest extends IntegrationTest {
 
     @Test
     @DisplayName("Can update a group with input")
-    void canUpdateAGroupWithInput() throws Exception {
+    public void canUpdateAGroupWithInput() throws Exception {
       GroupComposer.Composer groupWrapper =
           groupComposer.forGroup(GroupFixture.createGroup()).persist();
 
@@ -124,7 +124,7 @@ public class GroupApiTest extends IntegrationTest {
 
   @Nested
   @DisplayName("Update group with roles")
-  class UpdateGroupWithRoles {
+  public class UpdateGroupWithRoles {
     @Test
     void test_updateGroupRoles() throws Exception {
 
@@ -144,7 +144,7 @@ public class GroupApiTest extends IntegrationTest {
               .getResponse()
               .getContentAsString();
 
-      List<String> roles = JsonPath.read(response, "$.group_roles");
+      List<Role> roles = JsonPath.read(response, "$.group_roles");
       assertEquals(1, roles.size());
       assertEquals(role.getId(), roles.getFirst());
     }

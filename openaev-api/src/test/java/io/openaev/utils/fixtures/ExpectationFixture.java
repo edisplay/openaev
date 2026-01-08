@@ -23,20 +23,15 @@ public class ExpectationFixture {
 
   static Double SCORE = 100.0;
 
-  public static Expectation createExpectation(
-      InjectExpectation.EXPECTATION_TYPE expectationType, String expectationName) {
+  public static Expectation createExpectation(InjectExpectation.EXPECTATION_TYPE expectationType) {
     Expectation expectation = new Expectation();
     expectation.setExpectationGroup(false);
-    expectation.setName(expectationName);
+    expectation.setName("Expectation 1");
     expectation.setDescription("Expectation 1");
     expectation.setType(expectationType);
     expectation.setScore(10D);
     expectation.setExpirationTime(Instant.now().toEpochMilli());
     return expectation;
-  }
-
-  public static Expectation createExpectation(InjectExpectation.EXPECTATION_TYPE expectationType) {
-    return createExpectation(expectationType, "Expectation 1");
   }
 
   public static Expectation createExpectation() {

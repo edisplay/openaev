@@ -24,10 +24,8 @@ import io.openaev.rest.exercise.form.LessonsInput;
 import io.openaev.rest.exercise.form.ScenarioTeamPlayersEnableInput;
 import io.openaev.rest.helper.RestBehavior;
 import io.openaev.rest.scenario.form.*;
-import io.openaev.rest.scenario.response.ScenarioOutput;
 import io.openaev.rest.team.output.TeamOutput;
 import io.openaev.service.*;
-import io.openaev.service.scenario.ScenarioService;
 import io.openaev.utils.FilterUtilsJpa;
 import io.openaev.utils.pagination.SearchPaginationInput;
 import io.swagger.v3.oas.annotations.Operation;
@@ -134,8 +132,8 @@ public class ScenarioApi extends RestBehavior {
       resourceId = "#scenarioId",
       actionPerformed = Action.READ,
       resourceType = ResourceType.SCENARIO)
-  public ScenarioOutput scenario(@PathVariable @NotBlank final String scenarioId) {
-    return scenarioService.getScenarioById(scenarioId);
+  public Scenario scenario(@PathVariable @NotBlank final String scenarioId) {
+    return scenarioService.scenario(scenarioId);
   }
 
   @GetMapping(SCENARIO_URI + "/{scenarioId}/healthchecks")

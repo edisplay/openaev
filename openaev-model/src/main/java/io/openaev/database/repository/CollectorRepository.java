@@ -30,12 +30,8 @@ public interface CollectorRepository
 
   @Query(
       """
-              SELECT DISTINCT dr.collector
-              FROM Inject i
-              JOIN i.injectorContract ic
-              JOIN ic.payload p
-              JOIN p.detectionRemediations dr
-              WHERE i.id = :injectId
+          SELECT DISTINCT i.injectorContract.payload.collector FROM Inject i
+          WHERE i.id = :injectId
           """)
   List<Collector> findByInjectId(@Param("injectId") String injectId);
 }

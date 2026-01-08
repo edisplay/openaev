@@ -344,7 +344,7 @@ class UserApiTest extends IntegrationTest {
     grantRepository.saveAll(List.of(grantObserver, grantPlanner));
     group.setGrants(List.of(grantObserver, grantPlanner));
     group.setUsers(List.of(user));
-    groupRepository.save(group);
+    group = groupRepository.save(group);
 
     UpdateUserInput updateUserInput = new UpdateUserInput();
     updateUserInput.setFirstname(user.getFirstname());

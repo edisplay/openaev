@@ -170,6 +170,7 @@ class AssetGroupApiTest extends IntegrationTest {
     // -- PREPARE --
     Tag tag = tagRepository.save(TagFixture.getTag());
     AssetGroupInput assetGroupInput = createAssetGroupWithTags("Asset group", List.of(tag.getId()));
+    Filters.FilterGroup filterGroupExpected = Filters.FilterGroup.defaultFilterGroup();
 
     // --EXECUTE--
     String response =

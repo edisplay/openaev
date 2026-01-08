@@ -34,8 +34,6 @@ import jakarta.transaction.Transactional;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
@@ -75,7 +73,6 @@ class StixApiTest extends IntegrationTest {
   @Autowired private InjectorFixture injectorFixture;
 
   private String stixSecurityCoverage;
-  private String stixSecurityCoverageNoDuration;
   private String stixSecurityCoverageNoLabels;
   private String stixSecurityCoverageWithoutTtps;
   private String stixSecurityCoverageWithoutVulns;
@@ -97,10 +94,6 @@ class StixApiTest extends IntegrationTest {
 
     stixSecurityCoverage =
         loadJsonWithStixObjectsAsText("src/test/resources/stix-bundles/security-coverage.json");
-
-    stixSecurityCoverageNoDuration =
-        loadJsonWithStixObjectsAsText(
-            "src/test/resources/stix-bundles/security-coverage-no-duration.json");
 
     stixSecurityCoverageNoLabels =
         loadJsonWithStixObjectsAsText(
@@ -375,31 +368,6 @@ class StixApiTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName(
-        "Should create the scenario from stix bundle and not set recurrence end if not specified")
-    void shouldCreateScenarioNoEnd() throws Exception {
-      String response =
-          mvc.perform(
-                  post(STIX_URI + "/process-bundle")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(stixSecurityCoverageNoDuration))
-              .andExpect(status().isOk())
-              .andReturn()
-              .getResponse()
-              .getContentAsString();
-
-      assertThat(response).isNotBlank();
-      String scenarioId = JsonPath.read(response, "$.scenarioId");
-      Scenario createdScenario = scenarioRepository.findById(scenarioId).orElseThrow();
-
-      // -- ASSERT Scenario --
-      assertThat(createdScenario.getRecurrence()).isEqualTo("P1D");
-      assertThat(createdScenario.getRecurrenceEnd()).isNull();
-      assertThat(createdScenario.getTags().stream().map(Tag::getName).toList())
-          .contains(OPENCTI_TAG_NAME);
-    }
-
-    @Test
     @DisplayName("Should create the scenario from stix bundle")
     void shouldCreateScenario() throws Exception {
       String response =
@@ -423,10 +391,8 @@ class StixApiTest extends IntegrationTest {
           .isEqualTo("Security coverage test plan for threat context XYZ.");
       assertThat(createdScenario.getSecurityCoverage().getExternalId())
           .isEqualTo("security-coverage--4c3b91e2-3b47-4f84-b2e6-d27e3f0581c1");
-      assertThat(createdScenario.getRecurrence()).asString().isEqualTo("P1D");
-      // recurrence duration is set to P30D
-      assertThat(createdScenario.getRecurrenceEnd())
-          .isEqualTo(createdScenario.getRecurrenceStart().plus(30, ChronoUnit.DAYS));
+      assertTrue(createdScenario.getRecurrence().startsWith("0 "));
+      assertTrue(createdScenario.getRecurrence().endsWith(" * * *"));
       assertThat(createdScenario.getTags().stream().map(Tag::getName).toList())
           .contains(OPENCTI_TAG_NAME);
 
@@ -489,7 +455,7 @@ class StixApiTest extends IntegrationTest {
       entityManager.clear();
 
       String modifiedSecurityCoverage =
-          stixSecurityCoverage.replace("2025-12-31T14:00:00Z", Instant.now().toString());
+          stixSecurityCoverage.replace("2025-08-04T14:00:00Z", "2025-12-20T14:00:00Z");
 
       // Push same stix in order to check the number of created injects
       String updatedResponse =
@@ -543,11 +509,14 @@ class StixApiTest extends IntegrationTest {
       entityManager.flush();
       entityManager.clear();
 
+      String modifiedSecurityCoverage =
+          stixSecurityCoverage.replace("2025-12-31T14:00:00Z", "2025-12-10T13:00:00Z");
+
       // Push an old Stix
       mvc.perform(
               post(STIX_URI + "/process-bundle")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(stixSecurityCoverage))
+                  .content(modifiedSecurityCoverage))
           .andExpect(status().isBadRequest());
     }
 
@@ -573,14 +542,12 @@ class StixApiTest extends IntegrationTest {
       Set<Inject> injects = injectRepository.findByScenarioId(createdScenario.getId());
       assertThat(injects).hasSize(4);
 
-      String modifiedSecurityCoverageWithoutTtps =
-          stixSecurityCoverageWithoutTtps.replace("2025-12-31T14:00:00Z", Instant.now().toString());
       // Push stix without object type attack-pattern
       String updatedResponse =
           mvc.perform(
                   post(STIX_URI + "/process-bundle")
                       .contentType(MediaType.APPLICATION_JSON)
-                      .content(modifiedSecurityCoverageWithoutTtps))
+                      .content(stixSecurityCoverageWithoutTtps))
               .andExpect(status().isOk())
               .andReturn()
               .getResponse()
@@ -629,16 +596,12 @@ class StixApiTest extends IntegrationTest {
       entityManager.flush();
       entityManager.clear();
 
-      String modifiedSecurityCoverageWithoutVulns =
-          stixSecurityCoverageWithoutVulns.replace(
-              "2025-12-31T14:00:00Z", Instant.now().toString());
-
       // Push stix without object type attack-pattern
       String updatedResponse =
           mvc.perform(
                   post(STIX_URI + "/process-bundle")
                       .contentType(MediaType.APPLICATION_JSON)
-                      .content(modifiedSecurityCoverageWithoutVulns))
+                      .content(stixSecurityCoverageWithoutVulns))
               .andExpect(status().isOk())
               .andReturn()
               .getResponse()
@@ -684,15 +647,12 @@ class StixApiTest extends IntegrationTest {
       Set<Inject> injects = injectRepository.findByScenarioId(createdScenario.getId());
       assertThat(injects).hasSize(4);
 
-      String modifiedSecurityCoverageWithoutObjects =
-          stixSecurityCoverageWithoutObjects.replace(
-              "2025-12-31T14:00:00Z", Instant.now().toString());
       // Push stix without object type attack-pattern
       String updatedResponse =
           mvc.perform(
                   post(STIX_URI + "/process-bundle")
                       .contentType(MediaType.APPLICATION_JSON)
-                      .content(modifiedSecurityCoverageWithoutObjects))
+                      .content(stixSecurityCoverageWithoutObjects))
               .andExpect(status().isOk())
               .andReturn()
               .getResponse()
@@ -849,9 +809,7 @@ class StixApiTest extends IntegrationTest {
       assertThat(injects.stream().findFirst().get().getAssets()).hasSize(3);
 
       stixSecurityCoverageOnlyVulnsWithUpdatedLabel =
-          stixSecurityCoverageOnlyVulns
-              .replace("opencti", "empty-asset-groups")
-              .replace("2025-12-31T14:00:00Z", Instant.now().toString());
+          stixSecurityCoverageOnlyVulns.replace("opencti", "empty-asset-groups");
 
       mvc.perform(
               post(STIX_URI + "/process-bundle")
@@ -893,9 +851,7 @@ class StixApiTest extends IntegrationTest {
       assertThat(inject.getAssets()).isEmpty();
 
       stixSecurityCoverageOnlyVulnsWithUpdatedLabel =
-          stixSecurityCoverageOnlyVulns
-              .replace("opencti", "coverage")
-              .replace("2025-12-31T14:00:00Z", Instant.now().toString());
+          stixSecurityCoverageOnlyVulns.replace("opencti", "coverage");
 
       mvc.perform(
               post(STIX_URI + "/process-bundle")
@@ -920,13 +876,12 @@ class StixApiTest extends IntegrationTest {
     @Test
     @DisplayName("Should not remove security coverage even if scenario is deleted")
     void shouldExistSecurityCoverage() throws Exception {
-      String modifiedSecurityCoverage =
-          stixSecurityCoverage.replace("2025-12-31T14:00:00Z", Instant.now().toString());
+
       String response =
           mvc.perform(
                   post(STIX_URI + "/process-bundle")
                       .contentType(MediaType.APPLICATION_JSON)
-                      .content(modifiedSecurityCoverage))
+                      .content(stixSecurityCoverage))
               .andExpect(status().isOk())
               .andReturn()
               .getResponse()

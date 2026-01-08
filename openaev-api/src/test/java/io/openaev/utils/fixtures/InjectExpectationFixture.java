@@ -23,7 +23,6 @@ public class InjectExpectationFixture {
       case FAILED -> expectation.setScore(0.0);
       case PENDING -> expectation.setScore(null);
       case PARTIAL -> expectation.setScore(EXPECTED_SCORE / 2);
-      default -> throw new IllegalArgumentException("Invalid status: " + status);
     }
     return expectation;
   }

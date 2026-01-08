@@ -22,6 +22,9 @@ const GeneralFormTab = () => {
     }, {
       value: 'VULNERABILITY',
       label: t('Vulnerability'),
+    }, {
+      value: 'MANUAL',
+      label: t('Manual'),
     },
   ];
 

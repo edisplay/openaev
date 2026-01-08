@@ -7,7 +7,7 @@ import { type LoggedHelper } from '../../../../../actions/helper';
 import { useFormatter } from '../../../../../components/i18n';
 import ScaleBar from '../../../../../components/scalebar/ScaleBar';
 import { useHelper } from '../../../../../store';
-import { type InjectExpectation, type PlatformSettings } from '../../../../../utils/api-types';
+import { type PlatformSettings } from '../../../../../utils/api-types';
 import { splitDuration } from '../../../../../utils/Time';
 import { type ExpectationInput, type ExpectationInputForm } from './Expectation';
 import { formProps, infoMessage } from './ExpectationFormUtils';
@@ -42,7 +42,6 @@ const useStyles = makeStyles()(theme => ({
 
 interface Props {
   predefinedExpectations: ExpectationInput[];
-  isHumanInject: boolean;
   onSubmit: SubmitHandler<ExpectationInputForm>;
   handleClose: () => void;
 }
@@ -51,15 +50,14 @@ const ExpectationFormCreate: FunctionComponent<Props> = ({
   predefinedExpectations = [],
   onSubmit,
   handleClose,
-  isHumanInject,
 }) => {
   const { t } = useFormatter();
   const { classes } = useStyles();
 
   const { settings }: { settings: PlatformSettings } = useHelper((helper: LoggedHelper) => ({ settings: helper.getPlatformSettings() }));
-  const [expectationType, setExpectationType] = useState<string>(predefinedExpectations?.length > 0 ? predefinedExpectations[0].expectation_type : 'MANUAL');
+  const [expectationType, setExpectationType] = useState<string>('MANUAL');
 
-  const manualExpectationExpirationTime = useExpectationExpirationTime(predefinedExpectations?.length > 0 ? predefinedExpectations[0].expectation_type as InjectExpectation['inject_expectation_type'] : 'MANUAL');
+  const manualExpectationExpirationTime = useExpectationExpirationTime('MANUAL');
 
   const getExpectationDefaultScoreByType = (expectationType: string): number => {
     if (expectationType === 'MANUAL') {
@@ -136,7 +134,7 @@ const ExpectationFormCreate: FunctionComponent<Props> = ({
           inputProps={register('expectation_type')}
         >
           {predefinedTypes.map(type => (<MenuItem key={type} value={type}>{t(type)}</MenuItem>))}
-          {isHumanInject && <MenuItem key="MANUAL" value="MANUAL">{t('MANUAL')}</MenuItem>}
+          <MenuItem key="MANUAL" value="MANUAL">{t('MANUAL')}</MenuItem>
         </MUISelect>
       </div>
       {(watchType === 'ARTICLE' || watchType === 'CHALLENGE')

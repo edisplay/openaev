@@ -3,7 +3,6 @@ package io.openaev.database.repository;
 import io.openaev.database.model.Scenario;
 import io.openaev.database.raw.RawExerciseSimple;
 import io.openaev.database.raw.RawScenario;
-import io.openaev.database.raw.RawScenarioSimple;
 import io.openaev.utils.Constants;
 import java.time.Instant;
 import java.util.List;
@@ -48,7 +47,7 @@ public interface ScenarioRepository
               + Constants.INDEXING_RECORD_SET_SIZE
               + ";",
       nativeQuery = true)
-  List<RawScenarioSimple> findForIndexing(@Param("from") Instant from);
+  List<RawScenario> findForIndexing(@Param("from") Instant from);
 
   @Query(
       value =
@@ -109,7 +108,7 @@ public interface ScenarioRepository
               + "WHERE users_groups.user_id = :userId "
               + "GROUP BY sce.scenario_id",
       nativeQuery = true)
-  List<RawScenarioSimple> rawAllGranted(@Param("userId") String userId);
+  List<RawScenario> rawAllGranted(@Param("userId") String userId);
 
   @Query(
       value =
@@ -123,7 +122,7 @@ public interface ScenarioRepository
               + "AND sce.scenario_id IN :scenarioIds "
               + "GROUP BY sce.scenario_id",
       nativeQuery = true)
-  List<RawScenarioSimple> rawGrantedByScenarioIds(
+  List<RawScenario> rawGrantedByScenarioIds(
       @Param("userId") String userId, @Param("scenarioIds") List<String> scenarioIds);
 
   @Query(
@@ -133,7 +132,7 @@ public interface ScenarioRepository
               + "LEFT JOIN scenarios_tags sct ON sct.scenario_id = sce.scenario_id "
               + "GROUP BY sce.scenario_id",
       nativeQuery = true)
-  List<RawScenarioSimple> rawAll();
+  List<RawScenario> rawAll();
 
   @Query(
       value =
@@ -143,7 +142,7 @@ public interface ScenarioRepository
               + "WHERE sce.scenario_id IN :scenarioIds "
               + "GROUP BY sce.scenario_id",
       nativeQuery = true)
-  List<RawScenarioSimple> rawByScenarioIds(@Param("scenarioIds") List<String> scenarioIds);
+  List<RawScenario> rawByScenarioIds(@Param("scenarioIds") List<String> scenarioIds);
 
   @Query(
       value =
@@ -154,31 +153,7 @@ public interface ScenarioRepository
               + "WHERE sce.scenario_id IN :ids "
               + "GROUP BY sce.scenario_id",
       nativeQuery = true)
-  List<RawScenarioSimple> rawInjectsFromScenarios(@Param("ids") List<String> ids);
-
-  @Query(
-      value =
-          "SELECT s.*, COUNT(DISTINCT ut.*) as scenario_all_users_number, COUNT(DISTINCT stu.*) as scenario_users_number, "
-              + "array_agg(DISTINCT se.exercise_id) FILTER (WHERE se.exercise_id IS NOT NULL) as scenario_exercises, "
-              + "json_agg(DISTINCT kcp.*) FILTER (WHERE kcp.phase_id IS NOT NULL) as scenario_kill_chain_phases, "
-              + "array_union_agg(ic.injector_contract_platforms) FILTER ( WHERE ic.injector_contract_platforms IS NOT NULL ) as scenario_platforms, "
-              + "array_agg(DISTINCT sta.tag_id) FILTER (WHERE sta.tag_id IS NOT NULL) as scenario_tags, "
-              + "json_agg(DISTINCT stu.*) FILTER (WHERE stu.scenario_id IS NOT NULL) as scenario_teams_users "
-              + "FROM scenarios s "
-              + "LEFT JOIN scenarios_teams st ON st.scenario_id = s.scenario_id "
-              + "LEFT JOIN users_teams ut ON st.team_id = ut.team_id "
-              + "LEFT JOIN scenarios_exercises se ON se.scenario_id = s.scenario_id "
-              + "LEFT JOIN injects i ON s.scenario_id = i.inject_scenario "
-              + "LEFT JOIN injectors_contracts ic ON ic.injector_contract_id = i.inject_injector_contract "
-              + "LEFT JOIN injectors_contracts_attack_patterns icap ON ic.injector_contract_id = icap.injector_contract_id "
-              + "LEFT JOIN attack_patterns_kill_chain_phases apkcp ON icap.attack_pattern_id = apkcp.attack_pattern_id "
-              + "LEFT JOIN kill_chain_phases kcp ON kcp.phase_id = apkcp.phase_id "
-              + "LEFT JOIN scenarios_tags sta ON sta.scenario_id = s.scenario_id "
-              + "LEFT JOIN scenarios_teams_users stu ON stu.scenario_id = s.scenario_id "
-              + "WHERE s.scenario_id = :scenarioId "
-              + "GROUP BY s.scenario_id",
-      nativeQuery = true)
-  RawScenario getScenarioById(@Param("scenarioId") final String scenarioId);
+  List<RawScenario> rawInjectsFromScenarios(@Param("ids") List<String> ids);
 
   // -- CATEGORY --
 

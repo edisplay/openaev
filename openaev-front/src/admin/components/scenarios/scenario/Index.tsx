@@ -1,6 +1,7 @@
 import { NotificationsOutlined, UpdateOutlined } from '@mui/icons-material';
 import { Alert, AlertTitle, Box, IconButton, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import cronstrue from 'cronstrue';
 import { type FunctionComponent, lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Route, Routes, useLocation, useParams } from 'react-router';
 
@@ -14,10 +15,9 @@ import Loader from '../../../../components/Loader';
 import NotFound from '../../../../components/NotFound';
 import { useHelper } from '../../../../store';
 import { type NotificationRuleOutput, type Scenario } from '../../../../utils/api-types';
+import { parseCron, type ParsedCron } from '../../../../utils/Cron';
 import { useAppDispatch } from '../../../../utils/hooks';
 import useDataLoader from '../../../../utils/hooks/useDataLoader';
-import handle from '../../../../utils/period/Period';
-import { type PeriodExpressionHandler } from '../../../../utils/period/PeriodExpressionHandler';
 import { INHERITED_CONTEXT } from '../../../../utils/permissions/types';
 import useScenarioPermissions from '../../../../utils/permissions/useScenarioPermissions';
 import { DocumentContext, type DocumentContextType, InjectContext, PermissionsContext, type PermissionsContextType } from '../../common/Context';
@@ -37,7 +37,7 @@ const ScenarioAnalysis = lazy(() => import('./analysis/ScenarioAnalysis'));
 const _MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 const IndexScenarioComponent: FunctionComponent<{ scenario: Scenario }> = ({ scenario }) => {
-  const { t, locale, fld } = useFormatter();
+  const { t, ft, locale, fld } = useFormatter();
   const location = useLocation();
   const theme = useTheme();
   const permissionsContext: PermissionsContextType = {
@@ -65,23 +65,37 @@ const IndexScenarioComponent: FunctionComponent<{ scenario: Scenario }> = ({ sce
   const [openScenarioRecurringFormDialog, setOpenScenarioRecurringFormDialog] = useState<boolean>(false);
   const [openInstantiateSimulationAndStart, setOpenInstantiateSimulationAndStart] = useState<boolean>(false);
   const [selectRecurring, setSelectRecurring] = useState('noRepeat');
-  const [cronObject, setCronObject] = useState<PeriodExpressionHandler | null>(handle(scenario.scenario_recurrence));
+  const [cronExpression, setCronExpression] = useState<string | null>(scenario.scenario_recurrence || null);
+  const [parsedCronExpression, setParsedCronExpression] = useState<ParsedCron | null>(scenario.scenario_recurrence ? parseCron(scenario.scenario_recurrence) : null);
   const noRepeat = !!scenario.scenario_recurrence_end && !!scenario.scenario_recurrence_start
     && new Date(scenario.scenario_recurrence_end).getTime() - new Date(scenario.scenario_recurrence_start).getTime() <= _MS_PER_DAY
     && ['noRepeat', 'daily'].includes(selectRecurring);
   const getHumanReadableScheduling = () => {
-    if (!cronObject?.isValid()) {
+    if (!cronExpression || !parsedCronExpression) {
       return null;
     }
-    // process time
-
     let sentence: string;
-    sentence = `${cronObject.toTranslatableStringArray(locale).map(element => t(element)).join(' ')}`;
-    if (scenario.scenario_recurrence_end) {
-      sentence += ` ${t('recurrence_from')} ${fld(scenario.scenario_recurrence_start)}`;
-      sentence += ` ${t('recurrence_to')} ${fld(scenario.scenario_recurrence_end)}`;
+    if (noRepeat) {
+      sentence = `${fld(scenario.scenario_recurrence_start)} ${t('recurrence_at')} ${ft(new Date().setUTCHours(parsedCronExpression.h, parsedCronExpression.m, 0))}`;
     } else {
-      sentence += ` ${t('recurrence_starting_from')} ${fld(scenario.scenario_recurrence_start)}`;
+      const base = new Date();
+      base.setUTCHours(parsedCronExpression.h, parsedCronExpression.m, 0, 0);
+
+      const localHour = base.getHours();
+      const localMinute = base.getMinutes();
+
+      const rest = cronExpression.split(' ').slice(3).join(' ');
+
+      sentence = cronstrue.toString(`0 ${localMinute} ${localHour} ${rest}`, {
+        verbose: true,
+        locale,
+      });
+      if (scenario.scenario_recurrence_end) {
+        sentence += ` ${t('recurrence_from')} ${fld(scenario.scenario_recurrence_start)}`;
+        sentence += ` ${t('recurrence_to')} ${fld(scenario.scenario_recurrence_end)}`;
+      } else {
+        sentence += ` ${t('recurrence_starting_from')} ${fld(scenario.scenario_recurrence_start)}`;
+      }
     }
     return sentence;
   };
@@ -138,8 +152,8 @@ const IndexScenarioComponent: FunctionComponent<{ scenario: Scenario }> = ({ sce
             ]}
           />
           <ScenarioHeader
-            cronObject={cronObject}
-            setCronObject={setCronObject}
+            setCronExpression={setCronExpression}
+            setParsedCronExpression={setParsedCronExpression}
             setSelectRecurring={setSelectRecurring}
             selectRecurring={selectRecurring}
             setOpenScenarioRecurringFormDialog={setOpenScenarioRecurringFormDialog}
@@ -252,12 +266,12 @@ const IndexScenarioComponent: FunctionComponent<{ scenario: Scenario }> = ({ sce
                   alignItems: 'center',
                 }}
                 >
-                  {!cronObject?.isValid() && (
+                  {!cronExpression && (
                     <IconButton size="small" onClick={() => setOpenScenarioRecurringFormDialog(true)} style={{ marginRight: theme.spacing(1) }}>
                       <UpdateOutlined color="primary" />
                     </IconButton>
                   )}
-                  {cronObject?.isValid() && !scenario.scenario_recurrence && (
+                  {cronExpression && !scenario.scenario_recurrence && (
                     <IconButton
                       size="small"
                       style={{
@@ -268,15 +282,15 @@ const IndexScenarioComponent: FunctionComponent<{ scenario: Scenario }> = ({ sce
                       <UpdateOutlined />
                     </IconButton>
                   )}
-                  {cronObject?.isValid() && scenario.scenario_recurrence && (
+                  {cronExpression && scenario.scenario_recurrence && (
                     <Tooltip title={(t('Modify the scheduling'))}>
                       <IconButton size="small" onClick={() => setOpenScenarioRecurringFormDialog(true)} style={{ marginRight: theme.spacing(1) }}>
                         <UpdateOutlined color="primary" />
                       </IconButton>
                     </Tooltip>
                   )}
-                  <span style={{ color: theme.palette.text?.disabled }}>{!cronObject?.isValid() && t('Not scheduled')}</span>
-                  {cronObject?.isValid() && <span>{getHumanReadableScheduling()}</span>}
+                  <span style={{ color: theme.palette.text?.disabled }}>{!cronExpression && t('Not scheduled')}</span>
+                  {cronExpression && <span>{getHumanReadableScheduling()}</span>}
                 </div>
               )}
 
