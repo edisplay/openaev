@@ -19,4 +19,12 @@ public class ConnectorInstanceInMemory extends ConnectorInstance {
   private String className;
 
   private String id;
+
+  @Override
+  public String getHashIdentity() {
+    if (className == null) {
+      return "UNKNOWN";
+    }
+    return String.format("BUILTIN[%s]", className);
+  }
 }

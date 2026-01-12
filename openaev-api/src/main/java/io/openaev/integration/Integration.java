@@ -2,6 +2,7 @@ package io.openaev.integration;
 
 import io.openaev.database.model.ConnectorInstance;
 import io.openaev.database.model.ConnectorInstancePersisted;
+import io.openaev.helper.ConnectorInstanceHashHelper;
 import io.openaev.service.connector_instances.ConnectorInstanceService;
 import io.openaev.utils.reflection.FieldUtils;
 import java.lang.reflect.Field;
@@ -21,6 +22,8 @@ public abstract class Integration {
   protected ConnectorInstance.CURRENT_STATUS_TYPE currentStatus =
       ConnectorInstance.CURRENT_STATUS_TYPE.stopped;
 
+  private String appliedHash;
+
   protected Integration(
       ComponentRequestEngine componentRequestEngine,
       ConnectorInstance connectorInstance,
@@ -36,6 +39,7 @@ public abstract class Integration {
     if (ConnectorInstancePersisted.CURRENT_STATUS_TYPE.stopped.equals(this.currentStatus)) {
       this.innerStart();
       this.currentStatus = ConnectorInstance.CURRENT_STATUS_TYPE.started;
+      this.appliedHash = ConnectorInstanceHashHelper.computeInstanceHash(this.connectorInstance);
     } else {
       log.warn("Trying to start already started instance.");
     }
@@ -58,18 +62,40 @@ public abstract class Integration {
         this.stop();
         return;
       }
-      // only try to start stopped instances
-      if (ConnectorInstancePersisted.REQUESTED_STATUS_TYPE.starting.equals(
-              this.connectorInstance.getRequestedStatus())
-          && ConnectorInstancePersisted.CURRENT_STATUS_TYPE.stopped.equals(this.currentStatus)) {
+
+      final String instanceHash =
+          ConnectorInstanceHashHelper.computeInstanceHash(this.connectorInstance);
+
+      final boolean isRunning =
+          ConnectorInstancePersisted.CURRENT_STATUS_TYPE.started.equals(this.currentStatus);
+
+      final boolean isStopped =
+          ConnectorInstancePersisted.CURRENT_STATUS_TYPE.stopped.equals(this.currentStatus);
+
+      final boolean isStoppingRequested =
+          ConnectorInstancePersisted.REQUESTED_STATUS_TYPE.stopping.equals(
+              this.connectorInstance.getRequestedStatus());
+
+      final boolean isStartingRequested =
+          ConnectorInstancePersisted.REQUESTED_STATUS_TYPE.starting.equals(
+              this.connectorInstance.getRequestedStatus());
+
+      final boolean hasHashChanged =
+          this.appliedHash != null && !instanceHash.equals(this.appliedHash);
+
+      if (isRunning && isStoppingRequested) {
+        this.stop();
+        return;
+      }
+      if (isRunning && hasHashChanged) {
+        this.stop();
+        this.start();
+        return;
+      }
+      if (isStartingRequested && isStopped) {
         this.start();
       }
 
-      // stop instances in any state
-      if (ConnectorInstancePersisted.REQUESTED_STATUS_TYPE.stopping.equals(
-          this.connectorInstance.getRequestedStatus())) {
-        this.stop();
-      }
     } finally {
       // always save instance if applicable (e.g. state has changed)
       // even if something went wrong when starting the integration
