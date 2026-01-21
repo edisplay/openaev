@@ -23,15 +23,15 @@ const ConnectorList = () => {
   // Filter and sort hook
   const searchColumns = ['name', 'description'];
   const filtering = useSearchAndFilter(
-    connectorType,
+    '', // Due to normalizeSingle
     'name',
     searchColumns,
   );
 
   // Fetching data - hooks must be called at top level unconditionally
-  const { executors } = useHelper((helper: ExecutorHelper) => ({ executors: helper.getExecutors() }));
-  const { injectors } = useHelper((helper: InjectorHelper) => ({ injectors: helper.getInjectors() }));
-  const { collectors } = useHelper((helper: CollectorHelper) => ({ collectors: helper.getCollectors() }));
+  const { executors } = useHelper((helper: ExecutorHelper) => ({ executors: helper.getExecutorsIncludingPending() }));
+  const { injectors } = useHelper((helper: InjectorHelper) => ({ injectors: helper.getInjectorsIncludingPending() }));
+  const { collectors } = useHelper((helper: CollectorHelper) => ({ collectors: helper.getCollectorsIncludingPending() }));
 
   // Select the appropriate connectors based on connector type
   const getRawConnectors = (): (CollectorOutput | ExecutorOutput | InjectorOutput)[] => {
@@ -78,10 +78,12 @@ const ConnectorList = () => {
                 lastUpdatedAt: connector.updatedAt,
                 isVerified: connector.isVerified,
                 connectorUseCases: [],
+                isExternal: connector.isExternal,
+                connectorCurrentStatus: connector.currentStatus,
               }}
               cardActionUrl={routes.detail(connector.id)}
               isNotClickable={connector.catalog === null && connectorType !== 'injector'}
-              showLastUpdatedAt
+              showStatusOrLastUpdatedAt
             />
           </Grid>
         ))}

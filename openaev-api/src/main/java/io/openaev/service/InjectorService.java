@@ -51,7 +51,6 @@ public class InjectorService extends AbstractConnectorService<Injector, Injector
   private final AttackPatternRepository attackPatternRepository;
 
   private final FileService fileService;
-  private final ConnectorInstanceService connectorInstanceService;
   private final InjectorContractService injectorContractService;
   private final DomainService domainService;
 
@@ -74,20 +73,15 @@ public class InjectorService extends AbstractConnectorService<Injector, Injector
         ConnectorType.INJECTOR,
         connectorInstanceConfigurationRepository,
         catalogConnectorService,
+        connectorInstanceService,
         catalogConnectorMapper);
     this.injectorRepository = injectorRepository;
     this.injectorContractRepository = injectorContractRepository;
     this.attackPatternRepository = attackPatternRepository;
     this.fileService = fileService;
-    this.connectorInstanceService = connectorInstanceService;
     this.injectorContractService = injectorContractService;
     this.domainService = domainService;
     this.injectorMapper = injectorMapper;
-  }
-
-  @Override
-  protected List<ConnectorInstancePersisted> getRelatedInstances() {
-    return connectorInstanceService.injectorConnectorInstances();
   }
 
   @Override
@@ -102,8 +96,11 @@ public class InjectorService extends AbstractConnectorService<Injector, Injector
 
   @Override
   protected InjectorOutput mapToOutput(
-      Injector injector, CatalogConnector catalogConnector, boolean isVerified) {
-    return injectorMapper.toInjectorOutput(injector, catalogConnector, isVerified);
+      Injector injector,
+      CatalogConnector catalogConnector,
+      ConnectorInstance instance,
+      boolean existingInjector) {
+    return injectorMapper.toInjectorOutput(injector, catalogConnector, instance, existingInjector);
   }
 
   @Override

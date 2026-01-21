@@ -1,3 +1,4 @@
+import { capitalize } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { Outlet, useParams } from 'react-router';
 
@@ -91,7 +92,7 @@ const ConnectorLayout = () => {
     ? [
         { label: t('Integrations') },
         {
-          label: t(`${connectorType}s`),
+          label: capitalize(t(`${connectorType}s`)),
           link: routes.list,
         },
         {
@@ -102,7 +103,7 @@ const ConnectorLayout = () => {
     : [
         { label: t('Integrations') },
         {
-          label: t(`${connectorType}s`),
+          label: capitalize(t(`${connectorType}s`)),
           current: true,
         },
       ];

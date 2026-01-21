@@ -6,10 +6,7 @@ import static io.openaev.service.FileService.COLLECTORS_IMAGES_BASE_PATH;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.openaev.database.model.CatalogConnector;
-import io.openaev.database.model.Collector;
-import io.openaev.database.model.ConnectorInstancePersisted;
-import io.openaev.database.model.ConnectorType;
+import io.openaev.database.model.*;
 import io.openaev.database.repository.CollectorRepository;
 import io.openaev.database.repository.ConnectorInstanceConfigurationRepository;
 import io.openaev.rest.catalog_connector.dto.ConnectorIds;
@@ -38,7 +35,6 @@ public class CollectorService extends AbstractConnectorService<Collector, Collec
   private final CollectorRepository collectorRepository;
 
   private final FileService fileService;
-  private final ConnectorInstanceService connectorInstanceService;
 
   private final CollectorMapper collectorMapper;
 
@@ -55,16 +51,11 @@ public class CollectorService extends AbstractConnectorService<Collector, Collec
         ConnectorType.COLLECTOR,
         connectorInstanceConfigurationRepository,
         catalogConnectorService,
+        connectorInstanceService,
         catalogConnectorMapper);
     this.collectorRepository = collectorRepository;
     this.fileService = fileService;
-    this.connectorInstanceService = connectorInstanceService;
     this.collectorMapper = collectorMapper;
-  }
-
-  @Override
-  protected List<ConnectorInstancePersisted> getRelatedInstances() {
-    return connectorInstanceService.collectorConnectorInstances();
   }
 
   @Override
@@ -79,8 +70,12 @@ public class CollectorService extends AbstractConnectorService<Collector, Collec
 
   @Override
   protected CollectorOutput mapToOutput(
-      Collector collector, CatalogConnector catalogConnector, boolean isVerified) {
-    return collectorMapper.toCollectorOutput(collector, catalogConnector, isVerified);
+      Collector collector,
+      CatalogConnector catalogConnector,
+      ConnectorInstance connectorInstance,
+      boolean existingCollector) {
+    return collectorMapper.toCollectorOutput(
+        collector, catalogConnector, connectorInstance, existingCollector);
   }
 
   @Override

@@ -36,7 +36,6 @@ public class ExecutorService extends AbstractConnectorService<Executor, Executor
   private final ExecutionTraceRepository executionTraceRepository;
 
   private final FileService fileService;
-  private final ConnectorInstanceService connectorInstanceService;
 
   private final ExecutorMapper executorMapper;
 
@@ -54,17 +53,12 @@ public class ExecutorService extends AbstractConnectorService<Executor, Executor
         ConnectorType.EXECUTOR,
         connectorInstanceConfigurationRepository,
         catalogConnectorService,
+        connectorInstanceService,
         catalogConnectorMapper);
     this.fileService = fileService;
     this.executorRepository = executorRepository;
     this.executionTraceRepository = executionTraceRepository;
-    this.connectorInstanceService = connectorInstanceService;
     this.executorMapper = executorMapper;
-  }
-
-  @Override
-  protected List<ConnectorInstancePersisted> getRelatedInstances() {
-    return connectorInstanceService.executorConnectorInstances();
   }
 
   @Override
@@ -79,8 +73,11 @@ public class ExecutorService extends AbstractConnectorService<Executor, Executor
 
   @Override
   protected ExecutorOutput mapToOutput(
-      Executor executor, CatalogConnector catalogConnector, boolean isVerified) {
-    return executorMapper.toExecutorOutput(executor, catalogConnector, isVerified);
+      Executor executor,
+      CatalogConnector catalogConnector,
+      ConnectorInstance instance,
+      boolean existingExecutor) {
+    return executorMapper.toExecutorOutput(executor, catalogConnector, instance, existingExecutor);
   }
 
   @Override
@@ -191,13 +188,6 @@ public class ExecutorService extends AbstractConnectorService<Executor, Executor
   @Transactional
   public void remove(String id) {
     executorRepository.findById(id).ifPresent(executor -> executorRepository.deleteById(id));
-  }
-
-  @Transactional
-  public void removeFromType(String type) {
-    executorRepository
-        .findByType(type)
-        .ifPresent(executor -> executorRepository.deleteById(executor.getId()));
   }
 
   /**
