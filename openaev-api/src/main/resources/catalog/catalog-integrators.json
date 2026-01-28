@@ -895,27 +895,27 @@
                         "description": "Path to the icon file",
                         "type": "string"
                     },
-                    "NVD_NIST_CVE_API_KEY": {
+                    "NVDNISTCVE_API_KEY": {
                         "description": "The nvd nst cve API key.",
                         "format": "password",
                         "type": "string",
                         "writeOnly": true
                     },
-                    "NVD_NIST_CVE_API_BASE_URL": {
+                    "NVDNISTCVE_API_BASE_URL": {
                         "default": "https://services.nvd.nist.gov/rest/json",
                         "description": "The base URL for the nvd nst cve APIs. ",
                         "type": "string"
                     },
-                    "NVD_NIST_CVE_START_YEAR": {
+                    "NVDNISTCVE_START_YEAR": {
                         "default": "2019",
-                        "description": "The nvd nst cve start year. ",
+                        "description": "The nvd nst cve start year.",
                         "type": "string"
                     }
                 },
                 "required": [
                     "OPENAEV_URL",
                     "OPENAEV_TOKEN",
-                    "NVD_NIST_CVE_API_KEY"
+                    "NVDNISTCVE_API_KEY"
                 ],
                 "additionalProperties": true
             }
@@ -1406,7 +1406,7 @@
                         "type": "string"
                     },
                     "INJECTOR_NAME": {
-                        "default": "AWS",
+                        "default": "HTTP query",
                         "description": "Name of the injector.",
                         "type": "string"
                     },
